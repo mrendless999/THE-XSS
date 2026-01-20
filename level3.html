@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Level 3 - DOM XSS</title>
+<style>
+body {
+  background: #0d0d0d;
+  color: #00ff6a;
+  font-family: Consolas;
+  text-align: center;
+  padding-top: 60px;
+}
+input, button {
+  padding: 8px;
+  background: #111;
+  border: 1px solid #00ff6a;
+  color: #00ff6a;
+}
+button {
+  cursor: pointer;
+  font-weight: bold;
+}
+.box {
+  width: 60%;
+  min-width: 300px;
+  display: inline-block;
+  background: #111;
+  border: 1px solid #00ff6a;
+  padding: 20px;
+  border-radius: 6px;
+}
+.hint {
+  margin-top: 10px;
+  opacity: 0.8;
+}
+</style>
+</head>
+<body>
+
+<h1>Level 3 — DOM XSS</h1>
+
+<div class="box">
+  <p><b>Riddle:</b> A secret snack the browser keeps,<br>
+  In tiny jars while you don’t peek.<br>
+  Ask politely and you may see,<br>
+  The final flag that waits for thee.</p><br>
+
+  <form>
+    <input type="text" name="q" placeholder='Try something...'>
+    <button type="submit">Run</button>
+  </form>
+
+  <div id="output" style="margin-top:20px;"></div>
+
+  <p id="hint" class="hint"></p>
+</div>
+
+<script>
+document.cookie = "session=CTF123; path=/;";
+var params = new URLSearchParams(window.location.search);
+var q = params.get("q");
+var match = '<script>alert(document.cookie)<\/script>';
+var enc = "WlNGTEFHe1kwVV9BcmVfIWhlX0JFU1R9";
+
+// Load fails
+var fails = parseInt(localStorage.getItem("lvl3fails") || "0");
+
+if (q) {
+  document.getElementById("output").innerText = q;
+
+  if (q === match) {
+    localStorage.removeItem("lvl3fails");
+    alert(atob(enc));
+  } else {
+    fails++;
+    localStorage.setItem("lvl3fails", fails.toString());
+  }
+}
+
+if (fails >= 3) {
+  document.getElementById("hint").innerText =
+    'HINT: Use script tag to get cookie details';
+}
+</script>
+
+</body>
+</html>

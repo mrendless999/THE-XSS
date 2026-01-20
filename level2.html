@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Level 2 - Stored XSS</title>
+<style>
+body { background:#0d0d0d; color:#ff00d4; font-family:Consolas; text-align:center; padding-top:50px; }
+textarea, button { background:#111; border:1px solid #ff00d4; color:#ff00d4; padding:8px; }
+button { cursor:pointer; font-weight:bold; }
+.box { width:60%; min-width:300px; display:inline-block; background:#111; border:1px solid #ff00d4; padding:20px; border-radius:6px; }
+.msg { border-bottom:1px dashed #ff00d4; margin-top:10px; padding-bottom:5px; }
+.hint { margin-top:10px; opacity:0.8; }
+</style>
+</head>
+<body>
+
+<h1>Level 2 — Stored XSS</h1>
+
+<div class="box">
+  <p><b>Riddle:</b> Write me down and store me here,<br>
+  When saved I suddenly appear.<br>
+  One word makes the system glow —<br>
+  Whisper it inside a popping show.</p><br>
+
+  <textarea id="t" rows="3" cols="40"></textarea><br><br>
+  <button onclick="save()">Save</button>
+
+  <h3>Board:</h3>
+  <div id="board"></div>
+
+  <p id="hint" class="hint"></p>
+</div>
+
+<script>
+let store = [];
+const required = '<script>alert("zoho")<\/script>';
+
+// Load fails
+var fails = parseInt(localStorage.getItem("lvl2fails") || "0");
+
+function save() {
+  const v = document.getElementById("t").value.trim();
+  store.push(v);
+
+  if (v === required) {
+    localStorage.removeItem("lvl2fails");
+    const payload = v.substring(8, v.length - 9);
+    const script = document.createElement("script");
+    script.innerHTML = payload;
+    document.body.appendChild(script);
+
+    setTimeout(function() {
+      window.location.href = "level3.html";
+    }, 800);
+  } else {
+    fails++;
+    localStorage.setItem("lvl2fails", fails.toString());
+  }
+
+  render();
+}
+
+function render() {
+  let out = "";
+  store.forEach(function(s) {
+    out += '<p class="msg">' + s + '</p>';
+  });
+  document.getElementById("board").innerHTML = out;
+
+  if (fails >= 3) {
+    document.getElementById("hint").innerText = 'HINT: Use script tag with alert() with specific name';
+  }
+}
+</script>
+
+</body>
+</html>
