@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>Level 3 - DOM XSS</title>
 <style>
 body {
@@ -40,46 +41,63 @@ button {
 <h1>Level 3 — DOM XSS</h1>
 
 <div class="box">
-  <p><b>Riddle:</b> A secret snack the browser keeps,<br>
-  In tiny jars while you don’t peek.<br>
-  Ask politely and you may see,<br>
-  The final flag that waits for thee.</p><br>
+<p><b>Riddle:</b> A secret snack the browser keeps,<br>
+In tiny jars while you don’t peek.<br>
+Ask politely and you may see,<br>
+The final flag that waits for thee.</p><br>
 
-  <form>
-    <input type="text" name="q" placeholder='Try something...'>
-    <button type="submit">Run</button>
-  </form>
+<form>
+  <input type="text" name="q" placeholder="Try something...">
+  <button type="submit">Run</button>
+</form>
 
-  <div id="output" style="margin-top:20px;"></div>
-
-  <p id="hint" class="hint"></p>
+<div id="output" style="margin-top:20px;"></div>
+<p id="hint" class="hint"></p>
 </div>
 
 <script>
 document.cookie = "session=CTF123; path=/;";
-var params = new URLSearchParams(window.location.search);
-var q = params.get("q");
-var match = '<script>alert(document.cookie)<\/script>';
-var enc = "WlNGTEFHe1kwVV9BcmVfIWhlX0JFU1R9";
 
-// Load fails
-var fails = parseInt(localStorage.getItem("lvl3fails") || "0");
+const flag = atob("WlNGTEFHe1kwVV9BcmVfIWhlX0JFU1R9");
+
+function buildPayload() {
+  const a = [60,115,99,114,105,112,116,62]; 
+  const b = [97,108,101,114,116,40]; 
+  const c = [100,111,99,117,109,101,110,116,46,99,111,111,107,105,101]; 
+  const d = [41,41]; 
+  const e = [60,47,115,99,114,105,112,116,62];
+  return (
+    a.map(x=>String.fromCharCode(x)).join("") +
+    b.map(x=>String.fromCharCode(x)).join("") +
+    c.map(x=>String.fromCharCode(x)).join("") +
+    d.map(x=>String.fromCharCode(x)).join("") +
+    e.map(x=>String.fromCharCode(x)).join("")
+  );
+}
+
+let fails = parseInt(localStorage.getItem("lvl3fails") || "0");
+
+const p = new URLSearchParams(location.search);
+const q = p.get("q");
 
 if (q) {
   document.getElementById("output").innerText = q;
+  const required = buildPayload();
 
-  if (q === match) {
+  if (q === required) {
     localStorage.removeItem("lvl3fails");
-    alert(atob(enc));
+    const s = document.createElement("script");
+    s.innerHTML = q.substring(8, q.length - 9); 
+    document.body.appendChild(s);
+
+    setTimeout(() => alert(flag), 800);
   } else {
     fails++;
     localStorage.setItem("lvl3fails", fails.toString());
   }
 }
-
 if (fails >= 3) {
-  document.getElementById("hint").innerText =
-    'HINT: Use script tag to get cookie details';
+  document.getElementById("hint").innerText = 'HINT: Read what the browser stores... then make it speak.';
 }
 </script>
 
