@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>Level 2 - Stored XSS</title>
 <style>
 body { background:#0d0d0d; color:#ff00d4; font-family:Consolas; text-align:center; padding-top:50px; }
@@ -16,59 +17,61 @@ button { cursor:pointer; font-weight:bold; }
 <h1>Level 2 — Stored XSS</h1>
 
 <div class="box">
-  <p><b>Riddle:</b> Write me down and store me here,<br>
-  When saved I suddenly appear.<br>
-  One word makes the system glow —<br>
-  Whisper it inside a popping show.</p><br>
+<p><b>Riddle:</b> Write me down and store me here,<br>
+When saved I suddenly appear.<br>
+One word makes the system glow —<br>
+Whisper it inside a popping show.</p><br>
 
-  <textarea id="t" rows="3" cols="40"></textarea><br><br>
-  <button onclick="save()">Save</button>
+<textarea id="t" rows="3" cols="40"></textarea><br><br>
+<button onclick="save()">Save</button>
 
-  <h3>Board:</h3>
-  <div id="board"></div>
+<h3>Board:</h3>
+<div id="board"></div>
 
-  <p id="hint" class="hint"></p>
+<p id="hint" class="hint"></p>
 </div>
 
 <script>
 let store = [];
-const required = '<script>alert("zoho")<\/script>';
+let fails = parseInt(localStorage.getItem("lvl2fails") || "0");
 
-// Load fails
-var fails = parseInt(localStorage.getItem("lvl2fails") || "0");
+function hiddenPayload() {
+    const p1 = [60,115,99,114,105,112,116,62];           
+    const word = [122,111,104,111];                      
+    const p2 = [60,47,115,99,114,105,112,116,62];         
+    const prefix = p1.map(c => String.fromCharCode(c)).join("");
+    const core = 'alert("' + word.map(c => String.fromCharCode(c)).join("") + '")';
+    const suffix = p2.map(c => String.fromCharCode(c)).join("");
+    return prefix + core + suffix;
+}
 
 function save() {
-  const v = document.getElementById("t").value.trim();
-  store.push(v);
+    const v = document.getElementById("t").value.trim();
+    store.push(v);
 
-  if (v === required) {
-    localStorage.removeItem("lvl2fails");
-    const payload = v.substring(8, v.length - 9);
-    const script = document.createElement("script");
-    script.innerHTML = payload;
-    document.body.appendChild(script);
+    if (v === hiddenPayload()) {
+        localStorage.removeItem("lvl2fails");
+        const pure = v.replace(/<\/?script>/gi, "");
+        const script = document.createElement("script");
+        script.innerHTML = pure;
+        document.body.appendChild(script);
+        setTimeout(() => { window.location.href = "level3.html"; }, 800);
+    } else {
+        fails++;
+        localStorage.setItem("lvl2fails", fails.toString());
+    }
 
-    setTimeout(function() {
-      window.location.href = "level3.html";
-    }, 800);
-  } else {
-    fails++;
-    localStorage.setItem("lvl2fails", fails.toString());
-  }
-
-  render();
+    render();
 }
 
 function render() {
-  let out = "";
-  store.forEach(function(s) {
-    out += '<p class="msg">' + s + '</p>';
-  });
-  document.getElementById("board").innerHTML = out;
+    let out = "";
+    store.forEach(s => out += '<p class="msg">' + s + '</p>');
+    document.getElementById("board").innerHTML = out;
 
-  if (fails >= 3) {
-    document.getElementById("hint").innerText = 'HINT: Use script tag with alert() with specific name';
-  }
+    if (fails >= 3) {
+        document.getElementById("hint").innerText = 'HINT: Use a script wrapper and make something pop.';
+    }
 }
 </script>
 
